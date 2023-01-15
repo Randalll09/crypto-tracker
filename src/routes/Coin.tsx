@@ -1,8 +1,113 @@
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
+import styled from 'styled-components';
+
+const Container = styled.div`
+  padding: 0px 20px;
+`;
+
+const Header = styled.header`
+  height: 10vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+`;
+
+const Title = styled.h1`
+  color: ${({ theme }) => theme.accentColor};
+  font-size: 48px;
+`;
+
+const Loading = styled.span`
+  color: ${({ theme }) => theme.accentColor};
+  font-size: 48px;
+  display: block;
+  text-align: center;
+  font-weight: 600;
+  margin-top: 50px;
+`;
+
+interface LocationState {
+  state: string;
+}
+
+interface Tag {
+  coin_counter: number;
+  ico_counter: number;
+  id: string;
+  name: string;
+}
+
+interface InfoData {
+  id: string;
+  name: string;
+  symbol: string;
+  rank: number;
+  is_new: boolean;
+  is_active: boolean;
+  type: string;
+  logo: string;
+  tags: Tag[];
+  description: string;
+  message: string;
+  open_source: boolean;
+  started_at: string;
+  development_status: string;
+  hardware_wallet: boolean;
+  proof_type: string;
+  org_structure: string;
+  hash_algorithm: string;
+  first_data_at: string;
+  last_data_at: string;
+}
+
+interface PriceData {
+  id: string;
+  name: string;
+  symbol: string;
+  rank: number;
+  circulating_supply: number;
+  total_supply: number;
+  max_supply: number;
+  beta_value: number;
+  first_data_at: string;
+  last_updated: string;
+  quotes: {
+    USD: {
+      price: string;
+    };
+  };
+}
 
 function Coin() {
+  const [loading, setLoading] = useState(true);
+  const [info, setInfo] = useState<InfoData>();
+  const [priceInfo, setPriceInfo] = useState<PriceData>();
   const { coinId } = useParams<{ coinId: string }>();
+  const { state } = useLocation() as LocationState;
 
-  return <h1>Coin: {coinId}</h1>;
+  useEffect(() => {
+    (async () => {
+      const infoData = await (
+        await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
+      ).json();
+      const priceData = await (
+        await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
+      ).json();
+      setInfo(infoData);
+      setPriceInfo(priceData);
+      setLoading(false);
+    })();
+  }, []);
+
+  return (
+    <Container>
+      <Header>
+        <Title>{state ?? 'Loading'}</Title>
+      </Header>
+      {loading ? <Loading>LOADING</Loading> : <span>{info?.description}</span>}
+    </Container>
+  );
 }
 export default Coin;

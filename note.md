@@ -413,3 +413,406 @@ interface CoinInterface {
 ```
 
 에러가 날 수 있으니 임시 데이터인 coins는 지워주자.
+
+coins state를 만들어주고 interface를 배정하자.
+
+```JavaScript
+function Coins() {
+  const [coins, setCoins] = useState<CoinInterface[]>([]);
+  return (
+    <Container>
+      <Header>
+        <Title>Coins</Title>
+      </Header>
+      <CoinList>
+        {coins.map((coin) => (
+          <Coin key={coin.id}>
+            <Link to={`/${coin.id}`}>{coin.name} &rarr;</Link>
+          </Coin>
+        ))}
+      </CoinList>
+    </Container>
+  );
+}
+export default Coins;
+
+```
+
+더이상 에러가 나지 않는다. 이젠 API를 붙여보자. useEffect를 사용해 component가 시작할때 불러오게 만들자. 참고로 (()=>{})()로 함수를 만들면 불러오지 않아도 바로 함수가 실행된다.
+
+데이터는 코인을 구천개 이상 불러오기 떄문에 100개 정도로 잘라주고 state에 넣어주자.
+
+```JavaScript
+  useEffect(() => {
+    (async () => {
+      const response = await fetch('https://api.coinpaprika.com/v1/coins');
+      const json = await response.json();
+      setCoins(json.slice(0, 100));
+    })();
+  }, []);
+```
+
+마지막으로 loading state를 만들어보자.
+
+```JavaScript
+function Coins() {
+  const [coins, setCoins] = useState<CoinInterface[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    (async () => {
+      const response = await fetch('https://api.coinpaprika.com/v1/coins');
+      const json = await response.json();
+      setCoins(json.slice(0, 100));
+      setLoading(false);
+    })();
+  }, []);
+  return (
+    <Container>
+      <Header>
+        <Title>Coins</Title>
+      </Header>
+      {loading ? (
+        'loading'
+      ) : (
+        <CoinList>
+          {coins.map((coin) => (
+            <Coin key={coin.id}>
+              <Link to={`/${coin.id}`}>{coin.name} &rarr;</Link>
+            </Coin>
+          ))}
+        </CoinList>
+      )}
+    </Container>
+  );
+}
+export default Coins;
+
+```
+
+만약 페이지를 이동했다가 다시 홈으로 돌아오면 state가 지워지기 떄문에 다시 로딩창이 뜬다. 매번 API를 재호출 하는 것이다.
+
+## 5.4 Route States
+
+앞서서 Crypto Icon API를 적용해보자.
+
+[Crypto Icon Api](https://coinicons-api.vercel.app/)
+
+```JavaScript
+            <Coin key={coin.id}>
+              <Link to={`/${coin.id}`}>
+                <img
+                  src={`https://coinicons-api.vercel.app/api/icon/${coin.symbol.toLowerCase()}`}
+                  alt={coin.name}
+                />
+                {coin.name} &rarr;
+              </Link>
+            </Coin>
+```
+
+하지만 이미지가 너무 크니 img component 를 만들어주자.
+
+```JavaScript
+const Img = styled.img`
+  height: 25px;
+  width: 25px;
+`;
+
+```
+
+이제 Coin.tsx로 넘어가자. 코인의 정보를 APi로 불러오는 작업을 하자. 그전에 Link로 다른 화면에 정보를 보내보자. Coin 개별 페이지로 넘어가면서 유저가 전체 정보의 로딩을 기다리기 보단 일부의 정보라도 볼 수 있는게 UI 적으로 더 좋다.
+
+URL로 정보를 보낼 수도 있지만 state로 보낼수도 있다.
+
+state로 코인의 이름을 보내보자.
+
+```JavaScript
+            <Coin key={coin.id}>
+              <Link to={`/${coin.id}`} state={coin.name}>
+                <Img
+                  src={`https://coinicons-api.vercel.app/api/icon/${coin.symbol.toLowerCase()}`}
+                  alt={coin.name}
+                />
+                {coin.name} &rarr;
+              </Link>
+            </Coin>
+```
+
+Coin.tsx로 가자. Container와 Loading 로직을 가져오자. 복붙하고 location으로 state값도 불러오자.
+
+```JavaScript
+function Coin() {
+  const [loading, setLoading] = useState(true);
+  const { coinId } = useParams<{ coinId: string }>();
+  const { state } = useLocation();
+
+  console.log(state);
+
+  return (
+    <Container>
+      <Header>
+        <Title>Coins</Title>
+      </Header>
+      {loading ? <Loading>LOADING</Loading> : null}
+    </Container>
+  );
+}
+export default Coin;
+
+```
+
+이렇게하면 useLocation에 오류가 난다. LocationState interface를 생성해주자.
+
+react-router-dom의 v.6부턴 제네릭을 지원하지 않기 떄문에 아래와 같이 사용해 줘야 한다.
+
+```JavaScript
+
+interface LocationState {
+  state: string;
+}
+
+function Coin() {
+  const [loading, setLoading] = useState(true);
+  const { coinId } = useParams<{ coinId: string }>();
+  const { state } = useLocation() as LocationState;
+
+  console.log(state);
+
+  return (
+    <Container>
+      <Header>
+        <Title>{state}</Title>
+      </Header>
+      {loading ? <Loading>LOADING</Loading> : null}
+    </Container>
+  );
+}
+export default Coin;
+
+```
+
+하지만 이 사이트를 이제 시크릿 창으로 열면 에러가 난다. state를 만들려면 먼저 홈페이지에 있어야 하기 때문이다. 아래와 같이 바꿔주자.
+
+```JavaScript
+        <Title>{state ?? 'Loading'}</Title>
+
+```
+
+## 5.5 Coin Data
+
+이제 디테일 페이지를 꾸며주자.
+
+[https://api.coinpaprika.com/v1/coins/btc-bitcoin]
+
+[https://api.coinpaprika.com/v1/tickers/btc-bitcoin]
+
+첫번쨰 API는 코인의 정보를, 두번쨰 API는 코인의 가격을 알려준다.
+
+```JavaScript
+  useEffect(() => {
+    (async () => {
+      const infoData = await (
+        await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
+      ).json();
+      const priceData = await (
+        await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
+      ).json();
+      console.log(infoData);
+      console.log(priceData);
+    })();
+  }, []);
+```
+
+이제 받아온 정보를 state에 넣어주자.
+
+```JavaScript
+  const [info, setInfo] = useState({});
+  const [priceInfo, setPriceInfo] = useState({});
+  const { coinId } = useParams<{ coinId: string }>();
+  const { state } = useLocation() as LocationState;
+
+  useEffect(() => {
+    (async () => {
+      const infoData = await (
+        await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
+      ).json();
+      const priceData = await (
+        await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
+      ).json();
+      setInfo(infoData);
+      setPriceInfo(priceData);
+    })();
+  }, []);
+
+```
+
+현재 typescript는 info와 priceInfo가 빈 오브젝트라고 인식한다.
+
+아래와 같이 불러오면 typescript 에러가 난다.
+
+```JavaScript
+      {loading ? <Loading>LOADING</Loading> : <span>{info.hello}</span>}
+
+```
+
+그러므로 데이터 타입을 설명해줘야한다.
+
+대부분의 상황에선 API 가 타입스크립트에게 자동으로 정보를 전달할수 있다. 일단 자바스크립트를 사용하니 그 방법은 사용하지 않을 것이다.
+
+## 5.6 Data Types
+
+받아온 정보들을 콘솔에 찍은 다음, 둘다 우클릭으로 Store Object as Global Variable을 실행하자.
+
+그럼 object가 temp1 과 temp2 란 variable에 저장된다.
+
+이제 Info와 Price를 위한 인터페이스를 만들자.
+
+console에 Object.Keys(temp1) 을 하면 temp1에 저장된 모든 키값을 불러온다. 콘솔에 아래 명령어를 실행시켜 모든 키를 받아오자.
+
+```JavaScript
+Object.keys(temp1).join()
+```
+
+string 값을 InfoData interface에 붙여 넣은 뒤 모든 콤마를 선택하자. (콤마를 하나 선택후 컨트롤 D) 콤마를 모두 지운뒤 엔터를 친다. 그리고 모든 줄의 끝을 선택해 아래와 같이 만든다.
+
+```JavaScript
+interface InfoData{
+  id:;
+  name:;
+  symbol:;
+  rank:;
+  is_new:;
+  is_active:;
+  type:;
+  logo:;
+  tags:;
+  team:;
+  description:;
+  message:;
+  open_source:;
+  started_at:;
+  development_status:;
+  hardware_wallet:;
+  proof_type:;
+  org_structure:;
+  hash_algorithm:;
+  links:;
+  links_extended:;
+  whitepaper:;
+  first_data_at:;
+  last_data_at:;
+
+}
+
+```
+
+console에 아래의 명령어를 친다.
+
+```JavaScript
+Object.values(temp1).map(v=> typeof v).join()
+```
+
+위와 같이 모두 한줄씩 분리한뒤에, InfoData의 키끝줄을 모두 선택하고, 붙여넣기를 하면 바로 아래처럼 된다.
+
+```JavaScript
+interface InfoData {
+  id: string;
+  name: string;
+  symbol: string;
+  rank: number;
+  is_new: boolean;
+  is_active: boolean;
+  type: string;
+  logo: string;
+  tags: object;
+  team: object;
+  description: string;
+  message: string;
+  open_source: boolean;
+  started_at: string;
+  development_status: string;
+  hardware_wallet: boolean;
+  proof_type: string;
+  org_structure: string;
+  hash_algorithm: string;
+  links: object;
+  links_extended: object;
+  whitepaper: object;
+  first_data_at: string;
+  last_data_at: string;
+}
+```
+
+하지만 여기서 간단한 문제가 있는데, tags와 team은 object가 아닌, object로 이루어진 array다. Tag의 타입만 변경시켜주자.
+
+```JavaScript
+interface Tag {
+  coin_counter: number;
+  ico_counter: number;
+  id: string;
+  name: string;
+}
+
+interface InfoData {
+  id: string;
+  name: string;
+  symbol: string;
+  rank: number;
+  is_new: boolean;
+  is_active: boolean;
+  type: string;
+  logo: string;
+  tags: Tag[];
+  team: object;
+  description: string;
+  message: string;
+  open_source: boolean;
+  started_at: string;
+  development_status: string;
+  hardware_wallet: boolean;
+  proof_type: string;
+  org_structure: string;
+  hash_algorithm: string;
+  links: object;
+  links_extended: object;
+  whitepaper: object;
+  first_data_at: string;
+  last_data_at: string;
+}
+
+```
+
+Infodata interface에서 필요없는 수치들은 지워줘도 된다.
+
+이제 info state에 interface를 할당하자.
+
+```JavaScript
+  const [info, setInfo] = useState<InfoData>();
+
+```
+
+이제 priceData에도 같은 작업을 해주자.
+
+```JavaScript
+interface PriceData {
+  id: string;
+  name: string;
+  symbol: string;
+  rank: number;
+  circulating_supply: number;
+  total_supply: number;
+  max_supply: number;
+  beta_value: number;
+  first_data_at: string;
+  last_updated: string;
+   quotes: {
+    USD: {
+      price: string;
+    };
+  };
+}
+
+  const [priceInfo, setPriceInfo] = useState<PriceData>();
+
+```
+
+## 5.7 Nested Routes part One

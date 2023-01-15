@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { readJsonConfigFile } from 'typescript';
 
 const Container = styled.div`
   padding: 0px 20px;
@@ -23,7 +25,8 @@ const Coin = styled.li`
   a {
     padding: 20px;
     transition: color 0.2s ease-in;
-    display: block;
+    display: flex;
+    align-items: center;
   }
   &:hover {
     a {
@@ -37,35 +40,20 @@ const Title = styled.h1`
   font-size: 48px;
 `;
 
-const coins = [
-  {
-    id: 'btc-bitcoin',
-    name: 'Bitcoin',
-    symbol: 'BTC',
-    rank: 1,
-    is_new: false,
-    is_active: true,
-    type: 'coin',
-  },
-  {
-    id: 'eth-ethereum',
-    name: 'Ethereum',
-    symbol: 'ETH',
-    rank: 2,
-    is_new: false,
-    is_active: true,
-    type: 'coin',
-  },
-  {
-    id: 'usdt-tether',
-    name: 'Tether',
-    symbol: 'USDT',
-    rank: 3,
-    is_new: false,
-    is_active: true,
-    type: 'token',
-  },
-];
+const Loading = styled.span`
+  color: ${({ theme }) => theme.accentColor};
+  font-size: 48px;
+  display: block;
+  text-align: center;
+  font-weight: 600;
+  margin-top: 50px;
+`;
+
+const Img = styled.img`
+  height: 25px;
+  width: 25px;
+  margin-right: 10px;
+`;
 
 interface CoinInterface {
   id: string;
@@ -78,18 +66,38 @@ interface CoinInterface {
 }
 
 function Coins() {
+  const [coins, setCoins] = useState<CoinInterface[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    (async () => {
+      const response = await fetch('https://api.coinpaprika.com/v1/coins');
+      const json = await response.json();
+      setCoins(json.slice(0, 100));
+      setLoading(false);
+    })();
+  }, []);
   return (
     <Container>
       <Header>
         <Title>Coins</Title>
       </Header>
-      <CoinList>
-        {coins.map((coin) => (
-          <Coin key={coin.id}>
-            <Link to={`/${coin.id}`}>{coin.name} &rarr;</Link>
-          </Coin>
-        ))}
-      </CoinList>
+      {loading ? (
+        <Loading>LOADING</Loading>
+      ) : (
+        <CoinList>
+          {coins.map((coin) => (
+            <Coin key={coin.id}>
+              <Link to={`/${coin.id}`} state={coin.name}>
+                <Img
+                  src={`https://coinicons-api.vercel.app/api/icon/${coin.symbol.toLowerCase()}`}
+                  alt={coin.name}
+                />
+                {coin.name} &rarr;
+              </Link>
+            </Coin>
+          ))}
+        </CoinList>
+      )}
     </Container>
   );
 }
