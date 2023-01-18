@@ -170,8 +170,8 @@ function Coin() {
   //   })();
   // }, [coinId]);
 
-  const {} = useQuery(`${coinId} `, () => fetchCoinInfo(coinId));
-  const {} = useQuery(`${coinId} `, () => fetchCoinTickers(coinId));
+  const {} = useQuery(['info', coinId], () => fetchCoinInfo(coinId!));
+  const {} = useQuery(['tickers', coinId], () => fetchCoinTickers(coinId!));
 
   return (
     <Container>

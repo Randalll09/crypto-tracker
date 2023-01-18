@@ -182,5 +182,13 @@ export async function fetchCoinTickers(coinId: string) {
   const {} = useQuery(`${coinId} `, () => fetchCoinTickers(coinId));
 ```
 
-그런데 둘이 같은 key를 가지고 있다.
-9:23
+그런데 둘이 같은 key를 가지고 있다. 그런데 react query는 각 query를 array로 본다. 그러므로 key값을 array로주자. 또한 fetch 함수안의 coinId를 확장값으로 변경시켜주는 느낌표를 뒤에 붙인다.
+(참고:[https://stackoverflow.com/questions/54496398/typescript-type-string-undefined-is-not-assignable-to-type-string/54496418])
+
+```JavaScript
+
+  const {} = useQuery(['info', coinId], () => fetchCoinInfo(coinId!));
+  const {} = useQuery(['tickers', coinId], () => fetchCoinTickers(coinId!));
+```
+
+10:02
