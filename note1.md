@@ -837,4 +837,201 @@ interface PriceData {
   }, [coinId]);
 ```
 
-이제 새로운 스크린을 추가해주고 꾸며주자.
+이제 새로운 스크린을 추가해주고 꾸며주자. data를 시각화 해보자. 링크로도 타이틀을 볼수 있게 Title 콤포넌트를 변경해보자.
+
+```JavaScript
+        <Title>{state ? state : loading ? 'Loading' : info?.name}</Title>
+```
+
+그리고 기본적 정보값들을 불러오자.
+
+```JavaScript
+    <Container>
+      <Header>
+        <Title>{state ? state : loading ? 'Loading' : info?.name}</Title>
+      </Header>
+      {loading ? (
+        <Loading>LOADING</Loading>
+      ) : (
+        <Info>
+          <Overview className="overview">
+            <OverviewItem>
+              <p>RANK</p>
+              <p>{info?.rank}</p>
+            </OverviewItem>
+            <OverviewItem>
+              <p>SYMBOL</p>
+              <p>{info?.symbol}</p>
+            </OverviewItem>
+            <OverviewItem>
+              <p>OPEN SOURCE</p>
+              <p>{info?.open_source ? 'Yes' : 'No'}</p>
+            </OverviewItem>
+          </Overview>
+          <p className="description">{info?.description}</p>
+          <Overview className="overview">
+            <OverviewItem>
+              <p>TOTAL SUPPLY</p>
+              <p>{priceInfo?.total_supply}</p>
+            </OverviewItem>
+            <OverviewItem>
+              <p>MAX SUPPLY</p>
+              <p>{priceInfo?.max_supply}</p>
+            </OverviewItem>
+          </Overview>
+        </Info>
+      )}
+    </Container>
+```
+
+이제 nested router에 대해 얘기하자. Coin.tsx에 탭을 추가해줄건데 url로 탭을 조종해보자. Price.tsx, Chart.tsx를 만들어주자.
+
+```JavaScript
+const Price = () => {
+  return <h1>Price</h1>;
+};
+
+export default Price;
+
+const Chart = () => {
+  return <h1>Chart</h1>;
+};
+
+export default Chart;
+
+
+```
+
+이제 Coin.tsx로 가자. Overview밑에 두가지 route을 렌더링 하자. 수업에선 router v.5를 쓰지만 나는 v.6를 사용해 작업했다. Overview 아래에 Outlet을 추가한다.
+
+```JavaScript
+    <Info>
+          <Overview className="overview">
+            <OverviewItem>
+              <p>RANK</p>
+              <p>{info?.rank}</p>
+            </OverviewItem>
+            <OverviewItem>
+              <p>SYMBOL</p>
+              <p>{info?.symbol}</p>
+            </OverviewItem>
+            <OverviewItem>
+              <p>OPEN SOURCE</p>
+              <p>{info?.open_source ? 'Yes' : 'No'}</p>
+            </OverviewItem>
+          </Overview>
+          <p className="description">{info?.description}</p>
+          <Overview className="overview">
+            <OverviewItem>
+              <p>TOTAL SUPPLY</p>
+              <p>{priceInfo?.total_supply}</p>
+            </OverviewItem>
+            <OverviewItem>
+              <p>MAX SUPPLY</p>
+              <p>{priceInfo?.max_supply}</p>
+            </OverviewItem>
+          </Overview>
+          <Outlet />
+        </Info>
+```
+
+이제 Router로 가자.
+
+```JavaScript
+import { createBrowserRouter } from 'react-router-dom';
+import Coins from './Coins';
+import Coin from './Coin';
+import Price from './Price';
+import Chart from './Chart';
+
+const router = createBrowserRouter([
+  { path: '/', element: <Coins /> },
+  {
+    path: '/:coinId',
+    element: <Coin />,
+    children: [
+      {
+        path: 'price',
+        element: <Price />,
+      },
+      {
+        path: 'chart',
+        element: <Chart />,
+      },
+    ],
+  },
+]);
+
+export default router;
+
+```
+
+Coin.tsx에 Link를 추가해주면 잘 작동하는 것을 볼수 있다.
+
+## 5.8 Nested Routes part Two
+
+이제 탭을 만들어주자.
+
+```JavaScript
+         <Tab>
+            <TabEl>
+              <Link to={`/${coinId}/price`}>Price</Link>
+            </TabEl>
+            <TabEl>
+              <Link to={`/${coinId}/chart`}>Chart</Link>
+            </TabEl>
+          </Tab>
+```
+
+useMatch API를 사용해 유저와 소통해보자.
+
+```JavaScript
+  const priceMatch = useMatch('/:coinId/price');
+
+```
+
+만약 url이 일치하면 priceMatch는 url에 대한 객체를 반환하고, 아닐시 null을 반환한다.
+
+이제 TabEl에 isActive라는 prop을 추가하자.
+
+```JavaScript
+const TabEl = styled.p<{ isActive?: boolean }>`
+  > a {
+    display: block;
+    width: 300px;
+    font: 700 24px/2 ${({ theme }) => theme.defaultFont};
+    background-color: ${({ theme }) => theme.tabColor};
+    text-align: center;
+    border-radius: 8px;
+  }
+  .
+  .
+  .
+            <Tab>
+            <TabEl isActive={priceMatch != null}>
+              <Link to={`/${coinId}/price`}>Price</Link>
+            </TabEl>
+            <TabEl isActive={chartMatch != null}>
+              <Link to={`/${coinId}/chart`}>Chart</Link>
+            </TabEl>
+          </Tab>
+`;
+```
+
+그럼 이제 isActive가 실행될때 색을 바꿔줄수 있다.
+
+```JavaScript
+const TabEl = styled.p<{ isActive?: boolean }>`
+  > a {
+    color: ${(props) =>
+      props.isActive ? props.theme.accentColor : props.theme.textColor};
+    display: block;
+    width: 300px;
+    font: 700 24px/2 ${({ theme }) => theme.defaultFont};
+    background-color: ${({ theme }) => theme.tabColor};
+    text-align: center;
+    border-radius: 8px;
+  }
+`;
+
+```

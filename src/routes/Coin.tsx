@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import {
+  Link,
+  Outlet,
+  useLocation,
+  useMatch,
+  useParams,
+} from 'react-router-dom';
 import styled from 'styled-components';
 
 const Container = styled.div`
   padding: 0px 20px;
+  margin: 0 12vw;
 `;
 
 const Header = styled.header`
@@ -31,8 +38,59 @@ const Loading = styled.span`
 `;
 
 const Info = styled.div`
-  margin: 0 18vw;
+  display: grid;
+  gap: 2vw;
+  grid-template-columns: 10vw 10vw 52vw;
+`;
+
+const Description = styled.p`
+  font: 400 16px/2 'Sofia Sans', sans-serif;
+`;
+
+const Overview = styled.ul`
+  background-color: ${({ theme }) => theme.tabColor};
+  border-radius: 8px;
+  padding: 24px;
+  gap: 24px;
+  width: 10vw;
+  display: flex;
+  gap: 32px;
+  flex-direction: column;
+`;
+
+const OverviewItem = styled.li`
+  color: ${({ theme }) => theme.textColor};
+  text-align: center;
   > p {
+    &:nth-of-type(1) {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    &:nth-of-type(2) {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  }
+`;
+
+const Tab = styled.div`
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  margin-top: 32px;
+`;
+
+const TabEl = styled.p<{ isActive?: boolean }>`
+  > a {
+    color: ${(props) =>
+      props.isActive ? props.theme.accentColor : props.theme.textColor};
+    display: block;
+    width: 300px;
+    font: 700 24px/2 ${({ theme }) => theme.defaultFont};
+    background-color: ${({ theme }) => theme.tabColor};
+    text-align: center;
+    border-radius: 8px;
   }
 `;
 
@@ -94,7 +152,8 @@ function Coin() {
   const [priceInfo, setPriceInfo] = useState<PriceData>();
   const { coinId } = useParams<{ coinId: string }>();
   const { state } = useLocation() as LocationState;
-
+  const priceMatch = useMatch('/:coinId/price');
+  const chartMatch = useMatch('/:coinId/chart');
   useEffect(() => {
     (async () => {
       const infoData = await (
@@ -112,31 +171,52 @@ function Coin() {
   return (
     <Container>
       <Header>
-        <Title>{state ?? 'Loading'}</Title>
+        <Title>{state ? state : loading ? 'Loading' : info?.name}</Title>
       </Header>
       {loading ? (
         <Loading>LOADING</Loading>
       ) : (
-        <Info>
-          <div>
-            <ul>
-              <li>
+        <>
+          <Info>
+            <Overview className="overview">
+              <OverviewItem>
                 <p>RANK</p>
                 <p>{info?.rank}</p>
-              </li>
-              <li>
-                <p>PRICE</p>
-                <p>{priceInfo?.quotes.USD.price}</p>
-              </li>
-              <li>
+              </OverviewItem>
+              <OverviewItem>
                 <p>SYMBOL</p>
                 <p>{info?.symbol}</p>
-              </li>
-            </ul>
-          </div>
-          <p>{info?.description}</p>
-        </Info>
+              </OverviewItem>
+              <OverviewItem>
+                <p>OPEN SOURCE</p>
+                <p>{info?.open_source ? 'Yes' : 'No'}</p>
+              </OverviewItem>
+            </Overview>
+            <Overview className="overview">
+              <OverviewItem>
+                <p>TOTAL SUPPLY</p>
+                <p>{priceInfo?.total_supply}</p>
+              </OverviewItem>
+              <OverviewItem>
+                <p>MAX SUPPLY</p>
+                <p>{priceInfo?.max_supply}</p>
+              </OverviewItem>
+            </Overview>
+            <Description className="description">
+              {info?.description}
+            </Description>
+          </Info>
+          <Tab>
+            <TabEl isActive={priceMatch != null}>
+              <Link to={`/${coinId}/price`}>Price</Link>
+            </TabEl>
+            <TabEl isActive={chartMatch != null}>
+              <Link to={`/${coinId}/chart`}>Chart</Link>
+            </TabEl>
+          </Tab>
+        </>
       )}
+      <Outlet />
     </Container>
   );
 }
