@@ -7,7 +7,7 @@ const Container = styled.div`
 `;
 
 const Header = styled.header`
-  height: 10vh;
+  height: 20vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -17,6 +17,8 @@ const Header = styled.header`
 const Title = styled.h1`
   color: ${({ theme }) => theme.accentColor};
   font-size: 48px;
+
+  font-weight: 900;
 `;
 
 const Loading = styled.span`
@@ -26,6 +28,12 @@ const Loading = styled.span`
   text-align: center;
   font-weight: 600;
   margin-top: 50px;
+`;
+
+const Info = styled.div`
+  margin: 0 18vw;
+  > p {
+  }
 `;
 
 interface LocationState {
@@ -99,14 +107,36 @@ function Coin() {
       setPriceInfo(priceData);
       setLoading(false);
     })();
-  }, []);
+  }, [coinId]);
 
   return (
     <Container>
       <Header>
         <Title>{state ?? 'Loading'}</Title>
       </Header>
-      {loading ? <Loading>LOADING</Loading> : <span>{info?.description}</span>}
+      {loading ? (
+        <Loading>LOADING</Loading>
+      ) : (
+        <Info>
+          <div>
+            <ul>
+              <li>
+                <p>RANK</p>
+                <p>{info?.rank}</p>
+              </li>
+              <li>
+                <p>PRICE</p>
+                <p>{priceInfo?.quotes.USD.price}</p>
+              </li>
+              <li>
+                <p>SYMBOL</p>
+                <p>{info?.symbol}</p>
+              </li>
+            </ul>
+          </div>
+          <p>{info?.description}</p>
+        </Info>
+      )}
     </Container>
   );
 }
