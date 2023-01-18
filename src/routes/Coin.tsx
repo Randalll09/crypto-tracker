@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from 'react-query';
 import {
   Link,
   Outlet,
@@ -7,6 +8,7 @@ import {
   useParams,
 } from 'react-router-dom';
 import styled from 'styled-components';
+import { fetchCoinInfo, fetchCoinTickers } from '../api';
 
 const Container = styled.div`
   padding: 0px 20px;
@@ -147,26 +149,29 @@ interface PriceData {
 }
 
 function Coin() {
-  const [loading, setLoading] = useState(true);
-  const [info, setInfo] = useState<InfoData>();
-  const [priceInfo, setPriceInfo] = useState<PriceData>();
+  // const [loading, setLoading] = useState(true);
+  // const [info, setInfo] = useState<InfoData>();
+  // const [priceInfo, setPriceInfo] = useState<PriceData>();
   const { coinId } = useParams<{ coinId: string }>();
   const { state } = useLocation() as LocationState;
   const priceMatch = useMatch('/:coinId/price');
   const chartMatch = useMatch('/:coinId/chart');
-  useEffect(() => {
-    (async () => {
-      const infoData = await (
-        await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
-      ).json();
-      const priceData = await (
-        await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
-      ).json();
-      setInfo(infoData);
-      setPriceInfo(priceData);
-      setLoading(false);
-    })();
-  }, [coinId]);
+  // useEffect(() => {
+  //   (async () => {
+  //     const infoData = await (
+  //       await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
+  //     ).json();
+  //     const priceData = await (
+  //       await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
+  //     ).json();
+  //     setInfo(infoData);
+  //     setPriceInfo(priceData);
+  //     setLoading(false);
+  //   })();
+  // }, [coinId]);
+
+  const {} = useQuery(`${coinId} `, () => fetchCoinInfo(coinId));
+  const {} = useQuery(`${coinId} `, () => fetchCoinTickers(coinId));
 
   return (
     <Container>

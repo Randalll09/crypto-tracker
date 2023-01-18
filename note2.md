@@ -117,4 +117,70 @@ export default Coins;
 
 ```
 
-하지만 이렇게하면 9000개이상의 코인을 불러오기 때문에 100개만 잘라주자. react query의 좋은 점은 데이터를 자동으로 캐싱해둔다는 점이다.
+하지만 이렇게하면 9000개이상의 코인을 불러오기 때문에 100개만 잘라주자. react query의 좋은 점은 데이터를 자동으로 캐싱해둔다는 점이다. 그래서 매번 메인페이지로 돌아갈때마다 로딩을 보지 않아도 된다.
+
+## 5.10 React Query part Two
+
+이제 Coin screen의 코드를 더 업그레이드 해보자.
+
+React query의 Dev tools에 대해 알아보자. Devtools는 렌더 가능한 컴포넌트이다. Devtools를 사용하면 캐싱된 데이터를 볼수 있다.
+
+index.tsx로 가서 Devtools를 import 해오자.
+
+```JavaScript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import { ThemeProvider } from 'styled-components';
+import { theme } from './theme';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { ReactQueryDevtools } from 'react-query/devtools';
+
+const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);
+
+const queryClient = new QueryClient();
+
+root.render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  </React.StrictMode>
+);
+```
+
+이제 웹사이트로 돌아가면 Devtools 컴포넌트가 렌더링 되어있다.
+
+이번에는 Coin.tsx에 react query를 적용해보자.
+
+api.ts에 fetch 함수를 만들어주자.
+
+```JavaScript
+const BASE_URL = `https://api.coinpaprika.com/v1`;
+export async function fetchCoins() {
+  return fetch(`${BASE_URL}/coins`).then((res) => res.json());
+}
+export async function fetchCoinInfo(coinId: string) {
+  return fetch(`${BASE_URL}/coins/${coinId}`).then((res) => res.json());
+}
+
+export async function fetchCoinTickers(coinId: string) {
+  return fetch(`${BASE_URL}/tickers/${coinId}`).then((res) => res.json());
+}
+
+```
+
+그리고 Coin.tsx로 가서 적용시키자. coinId가 특수한 값이므로 key에 coinId를 넣자.
+
+```JavaScript
+  const {} = useQuery(`${coinId} `, () => fetchCoinInfo(coinId));
+  const {} = useQuery(`${coinId} `, () => fetchCoinTickers(coinId));
+```
+
+그런데 둘이 같은 key를 가지고 있다.
+9:23
