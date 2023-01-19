@@ -191,4 +191,64 @@ export async function fetchCoinTickers(coinId: string) {
   const {} = useQuery(['tickers', coinId], () => fetchCoinTickers(coinId!));
 ```
 
-10:02
+그리고 중괄호 안에 isLoading을 적어주는데 그러면 둘다 같은 이름이 된다. 그러므로 객체안 값에 이름을 할당해주자.
+
+```JavaScript
+  const { isLoading: infoLoading, data: infoData } = useQuery(
+    ['info', coinId],
+    () => fetchCoinInfo(coinId!)
+  );
+  const { isLoading: tickersLoading, data: tickersData } = useQuery(
+    ['tickers', coinId],
+    () => fetchCoinTickers(coinId!)
+  );
+```
+
+이제 기존 코드를 바꿔주자.
+
+```JavaScript
+  const loading = infoLoading || tickersLoading;
+.
+.
+.
+
+            <Overview className="overview">
+              <OverviewItem>
+                <p>RANK</p>
+                <p>{infoData?.rank}</p>
+              </OverviewItem>
+              <OverviewItem>
+                <p>SYMBOL</p>
+                <p>{infoData?.symbol}</p>
+              </OverviewItem>
+              <OverviewItem>
+                <p>OPEN SOURCE</p>
+                <p>{infoData?.open_source ? 'Yes' : 'No'}</p>
+              </OverviewItem>
+            </Overview>
+            <Overview className="overview">
+              <OverviewItem>
+                <p>TOTAL SUPPLY</p>
+                <p>{tickersData?.total_supply}</p>
+              </OverviewItem>
+              <OverviewItem>
+                <p>MAX SUPPLY</p>
+                <p>{tickersData?.max_supply}</p>
+              </OverviewItem>
+            </Overview>
+```
+
+하지만 이제 타입스트립트는 infoData나 tickersData가 뭔지 모른다. Interface를 할당해주자.
+
+```JavaScript
+  const { isLoading: infoLoading, data: infoData } = useQuery<InfoData>(
+    ['info', coinId],
+    () => fetchCoinInfo(coinId!)
+  );
+  const { isLoading: tickersLoading, data: tickersData } = useQuery<PriceData>(
+    ['tickers', coinId],
+    () => fetchCoinTickers(coinId!)
+  );
+```
+
+이제 정보가 query에 저장 되니 loading이 뜨지 않는다.
